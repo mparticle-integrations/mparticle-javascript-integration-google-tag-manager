@@ -7,7 +7,6 @@ Call mParticleUser.getMPID() to get mParticle ID
 For any additional methods, see http://docs.mparticle.com/developers/sdk/javascript/apidocs/classes/mParticle.Identity.getCurrentUser().html
 */
 
-
 /*
 identityApiRequest has the schema:
 {
@@ -19,30 +18,71 @@ identityApiRequest has the schema:
 For more userIdentity types, see http://docs.mparticle.com/developers/sdk/javascript/identity#allowed-identity-types
 */
 
-var identityHandler = {
-    onUserIdentified: function(mParticleUser) {
+function IdentityHandler(common) {
+    this.common = common || {};
+}
+IdentityHandler.prototype.onUserIdentified = function(mParticleUser) {
+    this.common.send({
+        event: {
+            EventName: 'User Identified'
+        },
+        user: mParticleUser,
+    });
+};
+IdentityHandler.prototype.onIdentifyComplete = function(
+    mParticleUser,
+    identityApiRequest
+) {
+    this.common.send({
+        event: {
+            EventName: 'Identify Complete'
+        },
+        user: mParticleUser,
+    });
+};
 
-    },
-    onIdentifyCompleted: function(mParticleUser, identityApiRequest) {
-
-    },
-    onLoginCompleted: function(mParticleUser, identityApiRequest) {
-
-    },
-    onLogoutCompleted: function(mParticleUser, identityApiRequest) {
-
-    },
-    onModifyCompleted: function(mParticleUser, identityApiRequest) {
-
-    },
+IdentityHandler.prototype.onLoginComplete = function(
+    mParticleUser,
+    identityApiRequest
+) {
+    this.common.send({
+        event: {
+            EventName: 'Login Complete'
+        },
+        user: mParticleUser,
+    });
+};
+IdentityHandler.prototype.onLogoutComplete = function(
+    mParticleUser,
+    identityApiRequest
+) {
+    this.common.send({
+        event: {
+            EventName: 'Logout Complete'
+        },
+        user: mParticleUser,
+    });
+};
+IdentityHandler.prototype.onModifyComplete = function(
+    mParticleUser,
+    identityApiRequest
+) {
+    this.common.send({
+        event: {
+            EventName: 'Modify Complete'
+        },
+        user: mParticleUser,
+    });
+};
 
 /*  In previous versions of the mParticle web SDK, setting user identities on
     kits is only reachable via the onSetUserIdentity method below. We recommend
     filling out `onSetUserIdentity` for maximum compatibility
 */
-    onSetUserIdentity: function(forwarderSettings, id, type) {
+IdentityHandler.prototype.onSetUserIdentity = function(
+    forwarderSettings,
+    id,
+    type
+) {};
 
-    }
-};
-
-module.exports = identityHandler;
+module.exports = IdentityHandler;

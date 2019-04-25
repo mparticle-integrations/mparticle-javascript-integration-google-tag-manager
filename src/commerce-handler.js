@@ -1,64 +1,307 @@
-var commerceHandler = {
-    logCommerceEvent: function(event) {
-        /*
-        Sample ecommerce event schema:
-        {
-            CurrencyCode: 'USD',
-            DeviceId:'a80eea1c-57f5-4f84-815e-06fe971b6ef2', // MP generated
-            EventAttributes: { key1: 'value1', key2: 'value2' },
-            EventType: 16,
-            EventCategory: 10, // (This is an add product to cart event, see below for additional ecommerce EventCategories)
-            EventName: "eCommerce - AddToCart",
-            MPID: "8278431810143183490",
-            ProductAction: {
-                Affiliation: 'aff1',
-                CouponCode: 'coupon',
-                ProductActionType: 7,
-                ProductList: [
-                    {
-                        Attributes: { prodKey1: 'prodValue1', prodKey2: 'prodValue2' },
-                        Brand: 'Apple',
-                        Category: 'phones',
-                        CouponCode: 'coupon1',
-                        Name: 'iPhone',
-                        Price: '600',
-                        Quantity: 2,
-                        Sku: "SKU123",
-                        TotalAmount: 1200,
-                        Variant: '64GB'
-                    }
-                ],
-                TransactionId: "tid1",
-                ShippingAmount: 10,
-                TaxAmount: 5,
-                TotalAmount: 1215,
-            },
-            UserAttributes: { userKey1: 'userValue1', userKey2: 'userValue2' }
-            UserIdentities: [
-                {
-                    Identity: 'test@gmail.com', Type: 7
-                }
-            ]
-        }
-
-        If your SDK has specific ways to log different eCommerce events, see below for
-        mParticle's additional ecommerce EventCategory types:
-
-            10: ProductAddToCart, (as shown above)
-            11: ProductRemoveFromCart,
-            12: ProductCheckout,
-            13: ProductCheckoutOption,
-            14: ProductClick,
-            15: ProductViewDetail,
-            16: ProductPurchase,
-            17: ProductRefund,
-            18: PromotionView,
-            19: PromotionClick,
-            20: ProductAddToWishlist,
-            21: ProductRemoveFromWishlist,
-            22: ProductImpression
-        */
-    }
+var ProductActionTypes = {
+    AddToCart: 10,
+    Click: 14,
+    Checkout: 12,
+    Impression: 22,
+    Purchase: 16,
+    Refund: 17,
+    RemoveFromCart: 11,
+    ViewDetail: 15
 };
 
-module.exports = commerceHandler;
+var PromotionType = {
+    PromotionClick: 19,
+    PromotionView: 18
+};
+
+function CommerceHandler(common) {
+    this.common = common || {};
+}
+CommerceHandler.prototype.buildAddToCart = function(event) {
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                currencyCode: event.CurrencyCode || 'USD',
+                add: {
+                    products: buildProductsList(event.ProductAction.ProductList)
+                }
+            }
+        }
+    };
+};
+CommerceHandler.prototype.buildCheckout = function(event) {
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                checkout: {
+                    actionField: {
+                        step: event.ProductAction.CheckoutStep,
+                        option: event.ProductAction.CheckoutOptions
+                    },
+                    products: buildProductsList(event.ProductAction.ProductList)
+                }
+            }
+        }
+    };
+};
+CommerceHandler.prototype.buildRemoveFromCart = function(event) {
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                currencyCode: event.CurrencyCode || 'USD',
+                remove: {
+                    products: buildProductsList(event.ProductAction.ProductList)
+                }
+            }
+        }
+    };
+};
+CommerceHandler.prototype.buildImpression = function(event, impression) {
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                currencyCode: event.CurrencyCode || 'USD',
+                impressions: buildProductsList(impression.ProductList)
+            }
+        }
+    };
+};
+CommerceHandler.prototype.buildProductClick = function(event) {
+    var actionField = {};
+
+    if (event.EventAttributes && event.EventAttributes.hasOwnProperty('list')) {
+        actionField['list'] = event.EventAttributes.list;
+    }
+
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                click: {
+                    actionField: actionField,
+                    products: buildProductsList(event.ProductAction.ProductList)
+                }
+            }
+        }
+    };
+};
+CommerceHandler.prototype.buildProductViewDetail = function(event) {
+    var actionField = {};
+
+    if (event.EventAttributes && event.EventAttributes.hasOwnProperty('list')) {
+        actionField['list'] = event.EventAttributes.list;
+    }
+
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                detail: {
+                    actionField: actionField,
+                    products: buildProductsList(event.ProductAction.ProductList)
+                }
+            }
+        }
+    };
+};
+CommerceHandler.prototype.buildPromoClick = function(event) {
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                promoClick: {
+                    promotions: buildPromoList(
+                        event.PromotionAction.PromotionList
+                    )
+                }
+            }
+        }
+    };
+};
+CommerceHandler.prototype.buildPromoView = function(event) {
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                promoView: {
+                    promotions: buildPromoList(
+                        event.PromotionAction.PromotionList
+                    )
+                }
+            }
+        }
+    };
+};
+CommerceHandler.prototype.buildPurchase = function(event) {
+    var productAction = event.ProductAction;
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                purchase: {
+                    actionField: {
+                        id: productAction.TransactionId || '',
+                        affiliation: productAction.Affiliation || '',
+                        revenue: productAction.TotalAmount || '',
+                        tax: productAction.TaxAmount || '',
+                        shipping: productAction.ShippingAmount || '',
+                        coupon: productAction.CouponCode || ''
+                    },
+                    products: buildProductsList(productAction.ProductList)
+                }
+            }
+        }
+    };
+};
+CommerceHandler.prototype.buildRefund = function(event) {
+    // Full refunds don't require a product list on the GTM side
+    // Partial refunds would include the specific items being refunded
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                refund: {
+                    actionField: {
+                        id: event.ProductAction.TransactionId || ''
+                    },
+                    products: buildProductsList(event.ProductAction.ProductList)
+                }
+            }
+        }
+    };
+};
+CommerceHandler.prototype.logCommerceEvent = function(event) {
+    var self = this;
+    switch (event.EventCategory) {
+        case ProductActionTypes.AddToCart:
+            var event = self.buildAddToCart(event);
+            break;
+        case ProductActionTypes.Checkout:
+            var event = self.buildCheckout(event);
+            break;
+        case ProductActionTypes.Click:
+            var event = self.buildProductClick(event);
+            break;
+        case ProductActionTypes.Impression:
+            try {
+                event.ProductImpressions.forEach(function(impression) {
+                    var impressionEvent = self.buildImpression(
+                        event,
+                        impression
+                    );
+                    self.common.send(impressionEvent);
+                });
+            } catch (error) {
+                console.log('error logging impressions', error);
+                return false;
+            }
+            return true;
+        case ProductActionTypes.Purchase:
+            var event = self.buildPurchase(event);
+            break;
+        case ProductActionTypes.Refund:
+            var event = self.buildRefund(event);
+            break;
+        case ProductActionTypes.RemoveFromCart:
+            var event = self.buildRemoveFromCart(event);
+            break;
+        case ProductActionTypes.ViewDetail:
+            var event = self.buildProductViewDetail(event);
+            break;
+        case PromotionType.PromotionClick:
+            var event = self.buildPromoClick(event);
+            break;
+        case PromotionType.PromotionView:
+            var event = self.buildPromoView(event);
+            break;
+        default:
+            console.error('Unknown Commerce Type', event);
+            return false;
+    }
+
+    self.common.send(event);
+    return true;
+};
+
+function parseProduct(_product) {
+    var product = {};
+
+    if (_product.Name) {
+        product.name = _product.Name;
+    }
+    if (_product.Sku) {
+        product.id = _product.Sku;
+    }
+    if (_product.Price) {
+        product.price = _product.Price;
+    }
+    if (_product.Brand) {
+        product.brand = _product.Brand;
+    }
+    if (_product.Category) {
+        product.category = _product.Category;
+    }
+    if (_product.Variant) {
+        product.variant = _product.Variant;
+    }
+    if (_product.Position) {
+        product.position = _product.Position;
+    }
+
+    return product;
+}
+
+function parsePromotion(_promotion) {
+    var promotion = {};
+
+    if (_promotion.Name) {
+        promotion.name = _promotion.Name;
+    }
+    if (_promotion.Id) {
+        promotion.id = _promotion.Id;
+    }
+    if (_promotion.Creative) {
+        promotion.creative = _promotion.Creative;
+    }
+    if (_promotion.Position) {
+        promotion.position = _promotion.Position;
+    }
+
+    return promotion;
+}
+
+function buildProductsList(products) {
+    var productsList = [];
+
+    products.forEach(function(product) {
+        productsList.push(parseProduct(product));
+    });
+
+    return productsList;
+}
+
+function buildPromoList(promotions) {
+    var promotionsList = [];
+
+    promotions.forEach(function(promotion) {
+        promotionsList.push(parsePromotion(promotion));
+    });
+
+    return promotionsList;
+}
+
+module.exports = CommerceHandler;
