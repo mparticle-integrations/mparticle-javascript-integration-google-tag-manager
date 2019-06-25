@@ -5,7 +5,7 @@ export default [
         input: base.input,
         output: {
             ...base.output,
-            file: 'build/GoogleTagManager-Kit.js',
+            file: 'dist/GoogleTagManager-Kit.js',
             name: 'mp-google-tag-manager-kit'
         },
         plugins: [...base.plugins]
