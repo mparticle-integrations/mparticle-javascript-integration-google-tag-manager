@@ -2,7 +2,8 @@
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
 	(global = global || self, factory(global['mp-google-tag-manager-kit'] = {}));
-}(this, function (exports) {
+}(this, function (exports) { 'use strict';
+
 	function createCommonjsModule(fn, module) {
 		return module = { exports: {} }, fn(module, module.exports), module.exports;
 	}
