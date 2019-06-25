@@ -1,5 +1,6 @@
 var initialization = {
     name: 'GoogleTagManager',
+    moduleId: 140,
     initForwarder: function(
         settings,
         testMode,
