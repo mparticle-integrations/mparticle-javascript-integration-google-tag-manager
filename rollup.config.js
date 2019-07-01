@@ -5,8 +5,9 @@ export default [
         input: base.input,
         output: {
             ...base.output,
-            file: 'dist/GoogleTagManager-Kit.js',
-            name: 'mp-google-tag-manager-kit'
+            format: 'iife',
+            file: 'build/GoogleTagManager-Kit.js',
+            name: 'mpGoogleTagManagerKit'
         },
         plugins: [...base.plugins]
     },
@@ -14,8 +15,19 @@ export default [
         input: base.input,
         output: {
             ...base.output,
-            file: 'build/GoogleTagManager-Kit.js',
-            name: 'mp-google-tag-manager-kit'
+            format: 'iife',
+            file: 'dist/GoogleTagManager-Kit.iife.js',
+            name: 'mpGoogleTagManagerKit'
+        },
+        plugins: [...base.plugins]
+    },
+    {
+        input: base.input,
+        output: {
+            ...base.output,
+            format: 'cjs',
+            file: 'dist/GoogleTagManager-Kit.common.js',
+            name: 'mpGoogleTagManagerKit'
         },
         plugins: [...base.plugins]
     }
