@@ -2,9 +2,9 @@
   "name": "@mparticle/web-google-tag-manager-kit",
   "version": "2.0.0-rc.1",
   "repository": "https://github.com/mparticle-integrations/mparticle-javascript-integration-google-tag-manager",
-  "browser": "dist/GoogleTagManager-Kit.js",
+  "browser": "dist/GoogleTagManager-Kit.common.js",
   "files": [
-    "dist/GoogleTagManager-Kit.js"
+    "dist/GoogleTagManager-Kit.common.js"
   ],
   "scripts": {
     "testKarma": "node test/boilerplate/test-karma.js",
@@ -16,7 +16,7 @@
     "@mparticle/web-sdk": "^2.9.4-rc.1"
   },
   "devDependencies": {
-    "@mparticle/web-kit-wrapper": "^1.0.0-rc7",
+    "@mparticle/web-kit-wrapper": "^1.0.0-rc8",
     "chai": "^4.2.0",
     "karma": "^3.1.1",
     "karma-chai": "^0.1.0",
