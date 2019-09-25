@@ -387,6 +387,10 @@ var mpGoogleTagManagerKit = (function (exports) {
             product.position = _product.Position;
         }
 
+        if (_product.Attributes) {
+            product.attributes = _product.Attributes;
+        }
+
         return product;
     }
 
