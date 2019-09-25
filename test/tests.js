@@ -589,6 +589,78 @@ describe('GoogleTagManager Forwarder', function() {
         });
     });
     describe('eCommerce', function() {
+        it('should add custom product attributes', function (done) {
+            var event = {
+                EventName: 'eCommerce - AddToCart',
+                EventCategory: mParticle.CommerceEventType.ProductAddToCart,
+                EventDataType: MessageTypes.Commerce,
+                UserAttributes: {},
+                UserIdentities: [],
+                EventAttributes: null,
+                DeviceId: '1234567890',
+                MPID: '8675309',
+                CurrencyCode: null,
+                ProductAction: {
+                    ProductActionType: 1,
+                    ProductList: [
+                        {
+                            Name: 'Some Product',
+                            Sku: '12312123',
+                            Price: '112.22',
+                            Quantity: 1,
+                            TotalAmount: 112.22,
+                            Attributes: {
+                                is_personalization_available: true,
+                                location: 'test_package',
+                                campaign: 'test_campaign'
+                            }
+                        }
+                    ]
+                }
+            };
+
+            var expectedEvent = {
+                event: 'eCommerce - AddToCart',
+                ecommerce: {
+                    currencyCode: 'USD',
+                    add: {
+                        products: [
+                            {
+                                name: 'Some Product',
+                                id: '12312123',
+                                price: '112.22',
+                                attributes: {
+                                    is_personalization_available: true,
+                                    location: 'test_package',
+                                    campaign: 'test_campaign'
+                                }
+                            }
+                        ]
+                    }
+                },
+                mp_data: {
+                    device_application_stamp: '1234567890',
+                    event: {
+                        name: 'eCommerce - AddToCart',
+                        type: 'commerce_event',
+                    },
+                    user: {
+                        mpid: '8675309',
+                        consent_state: {
+                            gdpr: {}
+                        },
+                        attributes: {},
+                        identities: {}
+                    }
+                }
+            };
+
+            mParticle.forwarder.process(event);
+
+            mockDataLayer.length.should.greaterThan(0);
+            mockDataLayer[0].should.match(expectedEvent);
+            done();
+        });
         it('should trigger product impressions', function(done) {
             var event = {
                 EventName: 'eCommerce - Impression',
