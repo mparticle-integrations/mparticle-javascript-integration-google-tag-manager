@@ -608,6 +608,10 @@ describe('GoogleTagManager Forwarder', function() {
                             Sku: '12312123',
                             Price: '112.22',
                             Quantity: 1,
+                            Brand: 'Omni Consumer Products',
+                            Variant: 'cheaper',
+                            Position: 'featured',
+                            CouponCode: 'SALE2019',
                             TotalAmount: 112.22,
                             Attributes: {
                                 is_personalization_available: true,
@@ -629,6 +633,12 @@ describe('GoogleTagManager Forwarder', function() {
                                 name: 'Some Product',
                                 id: '12312123',
                                 price: '112.22',
+                                quantity: 1,
+                                brand: 'Omni Consumer Products',
+                                variant: 'cheaper',
+                                position: 'featured',
+                                coupon_code: 'SALE2019',
+                                total_amount: 112.22,
                                 attributes: {
                                     is_personalization_available: true,
                                     location: 'test_package',
