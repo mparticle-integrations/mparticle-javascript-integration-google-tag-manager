@@ -362,33 +362,19 @@ var mpGoogleTagManagerKit = (function (exports) {
         return true;
     };
 
+    // Utility function
+    function toUnderscore(string) {
+        return string.split(/(?=[A-Z])/).join('_').toLowerCase();
+    }
     function parseProduct(_product) {
         var product = {};
 
-        if (_product.Name) {
-            product.name = _product.Name;
-        }
-        if (_product.Sku) {
-            product.id = _product.Sku;
-        }
-        if (_product.Price) {
-            product.price = _product.Price;
-        }
-        if (_product.Brand) {
-            product.brand = _product.Brand;
-        }
-        if (_product.Category) {
-            product.category = _product.Category;
-        }
-        if (_product.Variant) {
-            product.variant = _product.Variant;
-        }
-        if (_product.Position) {
-            product.position = _product.Position;
-        }
-
-        if (_product.Attributes) {
-            product.attributes = _product.Attributes;
+        for(var key in _product) {
+            if (key === 'Sku') {
+                product.id = _product.Sku;
+            } else {
+                product[toUnderscore(key)] = _product[key];
+            }
         }
 
         return product;
@@ -397,17 +383,8 @@ var mpGoogleTagManagerKit = (function (exports) {
     function parsePromotion(_promotion) {
         var promotion = {};
 
-        if (_promotion.Name) {
-            promotion.name = _promotion.Name;
-        }
-        if (_promotion.Id) {
-            promotion.id = _promotion.Id;
-        }
-        if (_promotion.Creative) {
-            promotion.creative = _promotion.Creative;
-        }
-        if (_promotion.Position) {
-            promotion.position = _promotion.Position;
+        for (var key in _promotion) {
+            promotion[toUnderscore(key)] = _promotion[key];
         }
 
         return promotion;
