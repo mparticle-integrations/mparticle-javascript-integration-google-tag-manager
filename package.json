@@ -1,7 +1,8 @@
 {
   "name": "@mparticle/web-google-tag-manager-kit",
-  "version": "2.0.0-rc.3",
+  "version": "2.0.1",
   "repository": "https://github.com/mparticle-integrations/mparticle-javascript-integration-google-tag-manager",
+  "main": "dist/GoogleTagManager-Kit.common.js",
   "browser": "dist/GoogleTagManager-Kit.common.js",
   "files": [
     "dist/GoogleTagManager-Kit.common.js"
