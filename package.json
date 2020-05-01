@@ -7,13 +7,15 @@
     "dist/GoogleTagManager-Kit.common.js"
   ],
   "scripts": {
+    "test": "npm run build && npm run test:karma",
+    "test:karma": "npm run testKarma",
     "testKarma": "node test/boilerplate/test-karma.js",
     "build": "rollup --config rollup.config.js",
     "watch": "rollup --config rollup.config.js -w",
     "testEndToEnd": "browserify node_modules/@mparticle/web-kit-wrapper/end-to-end-testapp/index.js -v -o test/end-to-end-testapp/build/compilation.js && open http://localhost:8082/node_modules/@mparticle/web-kit-wrapper/end-to-end-testapp/index.html && node node_modules/@mparticle/web-kit-wrapper/end-to-end-testapp/server"
   },
   "dependencies": {
-    "@mparticle/web-sdk": "^2.9.4-rc.1"
+    "@mparticle/web-sdk": "^2.11.10"
   },
   "devDependencies": {
     "@mparticle/web-kit-wrapper": "^1.0.0-rc8",
