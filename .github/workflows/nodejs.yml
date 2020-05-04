@@ -37,5 +37,5 @@ jobs:
       with:
         name: dist-files
         path: dist/*
-    - name: Git Commit and Push
-      run: git add -f dist/        
+    - run: git add -f dist/
+    - run: git commit -m "Generate latest bundle"
