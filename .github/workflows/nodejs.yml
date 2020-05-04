@@ -37,5 +37,12 @@ jobs:
       with:
         name: dist-files
         path: dist/*
-    - run: git add -f dist/
-    - run: git commit -m "Generate latest bundle"
+    - name: Commit changes
+      uses: EndBug/add-and-commit@v4
+      with:
+        author_name: mParticle Automation
+        author_email: developers@mparticle.com
+        message: "Generate latest bundle"
+        add: "dist/ build/"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
