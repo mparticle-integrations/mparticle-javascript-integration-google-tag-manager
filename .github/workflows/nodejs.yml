@@ -43,6 +43,7 @@ jobs:
         author_name: mParticle Automation
         author_email: developers@mparticle.com
         message: "Generate latest bundle"
+        force: true
         add: "dist/ build/"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
