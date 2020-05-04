@@ -37,3 +37,17 @@ jobs:
       with:
         name: dist-files
         path: dist/*
+    - name: Git Commit and Push
+      uses: github-actions-x/commit@v2.6
+      with:
+        # Github Token with commit access
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        # Override branch to push to
+        push-branch: 'master'
+        # Specify commit message
+        commit-message: 'Generate latest bundle'
+        # Force add files, useful for adding ignored files.
+        force-add: true
+        # Specific files to add.
+        files: build/ dist/
+        
