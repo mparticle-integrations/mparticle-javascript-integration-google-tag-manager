@@ -1,6 +1,6 @@
 window.MockHttpServer = require('./mockhttprequest.js');
 window.Should = require('should');
-require('../../node_modules/@mparticle/web-sdk/dist/mparticle.common.js');
+require("@mparticle/web-sdk");
 
 // We need to mock addForwarder b/c we're using multiple dataLayers for GTM
 // and the cli version of karma doesn't handle this properly
