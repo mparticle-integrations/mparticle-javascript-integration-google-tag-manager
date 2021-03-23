@@ -1243,9 +1243,7 @@ describe('GoogleTagManager Forwarder', function() {
                 ProductAction: {
                     ProductActionType: 4,
                     CheckoutStep: 42,
-                    CheckoutOptions: {
-                        flavor: 'orange'
-                    },
+                    CheckoutOptions: 'salmon mousse',
                     ProductList: [
                         {
                             Name: 'Headphones',
@@ -1304,9 +1302,7 @@ describe('GoogleTagManager Forwarder', function() {
                     checkout_option: {
                         actionField: {
                             step: 42,
-                            option: {
-                                flavor: 'orange'
-                            }
+                            option: 'salmon mousse'
                         },
                         products: [
                             {
