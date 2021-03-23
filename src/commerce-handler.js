@@ -2,6 +2,7 @@ var ProductActionTypes = {
     AddToCart: 10,
     Click: 14,
     Checkout: 12,
+    CheckoutOption: 13,
     Impression: 22,
     Purchase: 16,
     Refund: 17,
@@ -38,6 +39,23 @@ CommerceHandler.prototype.buildCheckout = function(event) {
         eventPayload: {
             ecommerce: {
                 checkout: {
+                    actionField: {
+                        step: event.ProductAction.CheckoutStep,
+                        option: event.ProductAction.CheckoutOptions
+                    },
+                    products: buildProductsList(event.ProductAction.ProductList)
+                }
+            }
+        }
+    };
+};
+CommerceHandler.prototype.buildCheckoutOption = function(event) {
+    return {
+        event: event,
+        eventType: 'commerce_event',
+        eventPayload: {
+            ecommerce: {
+                checkout_option: {
                     actionField: {
                         step: event.ProductAction.CheckoutStep,
                         option: event.ProductAction.CheckoutOptions
@@ -186,12 +204,16 @@ CommerceHandler.prototype.buildRefund = function(event) {
 };
 CommerceHandler.prototype.logCommerceEvent = function(event) {
     var self = this;
+
     switch (event.EventCategory) {
         case ProductActionTypes.AddToCart:
             var event = self.buildAddToCart(event);
             break;
         case ProductActionTypes.Checkout:
             var event = self.buildCheckout(event);
+            break;
+        case ProductActionTypes.CheckoutOption:
+            var event = self.buildCheckoutOption(event);
             break;
         case ProductActionTypes.Click:
             var event = self.buildProductClick(event);

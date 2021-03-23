@@ -1229,6 +1229,139 @@ describe('GoogleTagManager Forwarder', function() {
             mockDataLayer[0].should.match(expectedEvent);
             done();
         });
+        it('should trigger checkout with options', function (done) {
+            var event = {
+                EventName: 'eCommerce - CheckoutOption',
+                EventCategory: mParticle.CommerceEventType.ProductCheckoutOption,
+                EventDataType: MessageTypes.Commerce,
+                UserAttributes: {},
+                UserIdentities: [],
+                DeviceId: '1234567890',
+                MPID: '8675309',
+                ConsentState: null,
+                CurrencyCode: null,
+                ProductAction: {
+                    ProductActionType: 4,
+                    CheckoutStep: 42,
+                    CheckoutOptions: 'salmon mousse',
+                    ProductList: [
+                        {
+                            Name: 'Headphones',
+                            Sku: '44556',
+                            Price: '12.23',
+                            Quantity: 1,
+                            TotalAmount: 12.23,
+                            Attributes: null
+                        },
+                        {
+                            Name: 'Pizza',
+                            Sku: '809808',
+                            Price: '23.00',
+                            Quantity: 1,
+                            TotalAmount: 23,
+                            Attributes: null
+                        },
+                        {
+                            Name: 'Clash Vinyl',
+                            Sku: '00202001',
+                            Price: '12.99',
+                            Quantity: 1,
+                            TotalAmount: 12.99,
+                            Attributes: null
+                        },
+                        {
+                            Name: 'Drums',
+                            Sku: '0202200202',
+                            Price: '320.12',
+                            Quantity: 1,
+                            TotalAmount: 320.12,
+                            Attributes: null
+                        },
+                        {
+                            Name: 'Bass',
+                            Sku: '100100101',
+                            Price: '1204.02',
+                            Quantity: 1,
+                            TotalAmount: 1204.02,
+                            Attributes: null
+                        },
+                        {
+                            Name: 'Spaceboy Action Figure',
+                            Sku: '1',
+                            Price: '111.11',
+                            Quantity: 1,
+                            TotalAmount: 111.11,
+                            Attributes: null
+                        }
+                    ]
+                }
+            };
+            var expectedEvent = {
+                event: 'eCommerce - CheckoutOption',
+                ecommerce: {
+                    checkout_option: {
+                        actionField: {
+                            step: 42,
+                            option: 'salmon mousse'
+                        },
+                        products: [
+                            {
+                                name: 'Headphones',
+                                id: '44556',
+                                price: '12.23'
+                            },
+                            {
+                                name: 'Pizza',
+                                id: '809808',
+                                price: '23.00'
+                            },
+                            {
+                                name: 'Clash Vinyl',
+                                id: '00202001',
+                                price: '12.99'
+                            },
+                            {
+                                name: 'Drums',
+                                id: '0202200202',
+                                price: '320.12'
+                            },
+                            {
+                                name: 'Bass',
+                                id: '100100101',
+                                price: '1204.02'
+                            },
+                            {
+                                name: 'Spaceboy Action Figure',
+                                id: '1',
+                                price: '111.11'
+                            }
+                        ]
+                    }
+                },
+                mp_data: {
+                    device_application_stamp: '1234567890',
+                    event: {
+                        name: 'eCommerce - CheckoutOption',
+                        type: 'commerce_event',
+                        attributes: {}
+                    },
+                    user: {
+                        mpid: '8675309',
+                        consent_state: {
+                            gdpr: {}
+                        },
+                        attributes: {},
+                        identities: {}
+                    }
+                }
+            };
+
+            mParticle.forwarder.process(event);
+
+            mockDataLayer.length.should.greaterThan(0);
+            mockDataLayer[0].should.match(expectedEvent);
+            done();
+        });
         it('should trigger purchases', function(done) {
             var event = {
                 EventName: 'eCommerce - Purchase',
