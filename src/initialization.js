@@ -21,7 +21,7 @@ var initialization = {
             return false;
         }
 
-        var includeContainer = settings.includeContainer || false;
+        var includeContainer = settings.includeContainer === 'True';
 
         var dataLayerName = sanitizeDataLayerName(settings.dataLayerName);
         if (!dataLayerName) {
