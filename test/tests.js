@@ -107,30 +107,11 @@ describe('GoogleTagManager Forwarder', function() {
     var mockDataLayer;
     var mockUser;
 
-    before(function() {
-        // mParticle.config = {
-        //     workspaceToken: 'fubar',
-        //     minWebviewBridgeVersion: 1
-        // };
-        // mParticle.init('test');
-        // TODO: Should be defined at the top.
-        // TODO: Find out what these are for
-        // Maybe mock data?
-        // mParticle.EventType = EventType;
-        // mParticle.ProductActionType = ProductActionType;
-        // mParticle.PromotionType = PromotionActionType;
-        // mParticle.IdentityType = IdentityType;
-        // mParticle.CommerceEventType = CommerceEventType;
-        // mParticle.eCommerce = {};
-        // mParticle.eCommerce.expandCommerceEvent = expandCommerceEvent;
-    });
-
-    beforeEach(function() {
+    beforeEach(function () {
         window.GoogleTagManagerMockForwarder = new GoogleTagManagerMockForwarder();
         // Include any specific settings that is required for initializing your SDK here
         var sdkSettings = {
             containerId: 'GTM-1138',
-            // containerId: 'GTM-N6PZ7B2',
             dataLayerName: 'mparticle_data_layer'
         };
         mParticle.forwarder.init(sdkSettings, reportService.cb, true);

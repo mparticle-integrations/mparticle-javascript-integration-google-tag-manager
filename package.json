@@ -8,6 +8,8 @@
     "dist/GoogleTagManager-Kit.common.js"
   ],
   "scripts": {
+    "test": "npm run build && npm run test:karma",
+    "test:karma": "npm run testKarma",
     "testKarma": "node test/boilerplate/test-karma.js",
     "build": "ENVIRONMENT=production rollup --config rollup.config.js",
     "watch": "ENVIRONMENT=production rollup --config rollup.config.js -w",
