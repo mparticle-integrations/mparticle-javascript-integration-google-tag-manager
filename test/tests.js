@@ -37,18 +37,32 @@ describe('GoogleTagManager Forwarder', function() {
         return '1234567890';
     };
     mParticle.Identity = {
-        getCurrentUser: function() {
+        getCurrentUser: function () {
             return {
-                getMPID: function() {
+                getMPID: function () {
                     return '123';
                 },
-                getConsentState: function() {
+                getConsentState: function () {
                     return {
-                        gdpr: {}
+                        gdpr: {},
+                        getGDPRConsentState: function () {
+                            return {
+                                some_consent: {
+                                    Consented: false,
+                                    Timestamp: 1,
+                                    Document: 'some_consent',
+                                },
+                                test_consent: {
+                                    Consented: false,
+                                    Timestamp: 1,
+                                    Document: 'test_consent',
+                                },
+                            };
+                        },
                     };
-                }
+                },
             };
-        }
+        },
     };
     // -------------------START EDITING BELOW:-----------------------
     var GoogleTagManagerMockForwarder = function() {
@@ -1590,8 +1604,50 @@ describe('GoogleTagManager Forwarder', function() {
             done();
         });
     });
-    describe('Consent', function() {
-        it('should consolidate consent information', function(done) {
+    describe('Consent', function () {
+        var consentMap = [
+            {
+                jsmap: null,
+                map: 'some_consent',
+                maptype: 'ConsentPurposes',
+                value: 'ad_user_data',
+            },
+            {
+                jsmap: null,
+                map: 'storage_consent',
+                maptype: 'ConsentPurposes',
+                value: 'analytics_storage',
+            },
+            {
+                jsmap: null,
+                map: 'other_test_consent',
+                maptype: 'ConsentPurposes',
+                value: 'ad_storage',
+            },
+            {
+                jsmap: null,
+                map: 'test_consent',
+                maptype: 'ConsentPurposes',
+                value: 'ad_personalization',
+            },
+        ];
+
+        beforeEach(function () {
+            mParticle.forwarders = [];
+        });
+
+        afterEach(function () {});
+
+        it('should consolidate consent information', function (done) {
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                },
+                reportService.cb,
+                true
+            );
+
             var event = {
                 EventName: 'Test User Action',
                 EventDataType: MessageTypes.PageEvent,
@@ -1645,6 +1701,628 @@ describe('GoogleTagManager Forwarder', function() {
 
             mockDataLayer.length.should.greaterThan(0);
             mockDataLayer[0].should.match(expectedEvent);
+            done();
+        });
+
+        it('should construct a Default Consent State Payload from Mappings', function (done) {
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                    consentMappingWeb:
+                        '[{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;some_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_user_data&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;storage_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;analytics_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;other_test_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;test_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_personalization&quot;}]',
+                },
+                reportService.cb,
+                true
+            );
+
+            var expectedDataLayer = [
+                'consent',
+                'default',
+                {
+                    ad_user_data: 'denied',
+                    ad_personalization: 'denied',
+                },
+            ];
+
+            mockDataLayer.length.should.eql(1);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayer[2]);
+            done();
+        });
+
+        it('should merge Consent Setting Defaults with User Consent State to construct a Default Consent State', (done) => {
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                    consentMappingWeb: JSON.stringify(consentMap),
+                    defaultAdUserDataConsentWeb: 'Granted', // Will be overriden by User Consent State
+                    defaultAdPersonalizationConsentWeb: 'Granted', // Will be overriden by User Consent State
+                    defaultAdStorageConsentWeb: 'Granted',
+                    defaultAnalyticsStorageConsentWeb: 'Granted',
+                },
+                reportService.cb,
+                true
+            );
+
+            var expectedDataLayer = [
+                'consent',
+                'default',
+                {
+                    ad_personalization: 'denied', // From User Consent State
+                    ad_user_data: 'denied', // From User Consent State
+                    ad_storage: 'granted', // From Consent Settings
+                    analytics_storage: 'granted', // From Consent Settings
+                },
+            ];
+
+            mockDataLayer.length.should.eql(1);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayer[2]);
+
+            done();
+        });
+
+        it('should ignore Unspecified Consent Settings if NOT explicitely defined in Consent State', (done) => {
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                    consentMappingWeb: JSON.stringify(consentMap),
+                    defaultAdUserDataConsentWeb: 'Unspecified',
+                    defaultAdPersonalizationConsentWeb: 'Unspecified', // Will be overriden by User Consent State
+                    defaultAdStorageConsentWeb: 'Unspecified', // Will be overriden by User Consent State
+                    defaultAnalyticsStorageConsentWeb: 'Unspecified',
+                },
+                reportService.cb,
+                true
+            );
+
+            var expectedDataLayer = [
+                'consent',
+                'default',
+                {
+                    ad_personalization: 'denied', // From User Consent State
+                    ad_user_data: 'denied', // From User Consent State
+                },
+            ];
+
+            mockDataLayer.length.should.eql(1);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayer[2]);
+
+            done();
+        });
+
+        it('should construct a Consent State Update Payload when consent changes', (done) => {
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                    consentMappingWeb: JSON.stringify(consentMap),
+                },
+                reportService.cb,
+                true
+            );
+
+            var expectedDataLayerBefore = [
+                'consent',
+                'update',
+                {
+                    ad_user_data: 'denied',
+                    ad_personalization: 'denied',
+                },
+            ];
+
+            mockDataLayer.length.should.eql(1);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayerBefore[2]);
+
+            mParticle.forwarder.process({
+                EventName: 'Test Event 1',
+                EventDataType: MessageTypes.PageEvent,
+                EventCategory: mParticle.EventType.Unknown,
+                ConsentState: {
+                    getGDPRConsentState: function () {
+                        return {
+                            some_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'some_consent',
+                            },
+                            ignored_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'ignored_consent',
+                            },
+                            test_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'test_consent',
+                            },
+                        };
+                    },
+
+                    getCCPAConsentState: function () {
+                        return {
+                            data_sale_opt_out: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'some_consent',
+                            },
+                        };
+                    },
+                },
+            });
+
+            var expectedDataLayerAfter = [
+                'consent',
+                'update',
+                {
+                    ad_user_data: 'granted',
+                    ad_personalization: 'granted',
+                },
+            ];
+
+            // Data layer have 3 elements:
+            // Consent Defaults at index 0
+            // Consent Update at index 1
+            // Test Event 1 at index 2
+            mockDataLayer.length.should.eql(3);
+            mockDataLayer[1][0].should.equal('consent');
+            mockDataLayer[1][1].should.equal('update');
+            mockDataLayer[1][2].should.deepEqual(expectedDataLayerAfter[2]);
+
+            mockDataLayer[2].should.have.property('event');
+
+            mParticle.forwarder.process({
+                EventName: 'Test Event 2',
+                EventDataType: MessageTypes.PageEvent,
+                EventCategory: mParticle.EventType.Unknown,
+                ConsentState: {
+                    getGDPRConsentState: function () {
+                        return {
+                            some_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'some_consent',
+                            },
+                            ignored_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'ignored_consent',
+                            },
+                            test_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'test_consent',
+                            },
+                            other_test_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'other_test_consent',
+                            },
+                            storage_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'storage_consent',
+                            },
+                        };
+                    },
+
+                    getCCPAConsentState: function () {
+                        return {
+                            data_sale_opt_out: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'data_sale_opt_out',
+                            },
+                        };
+                    },
+                },
+            });
+
+            var expectedDataLayerFinal = [
+                'consent',
+                'update',
+                {
+                    ad_personalization: 'granted',
+                    ad_storage: 'granted',
+                    ad_user_data: 'granted',
+                    analytics_storage: 'denied',
+                },
+            ];
+
+            // Data layer have 5 elements:
+            // Consent Defaults at index 0
+            // Consent Update at index 1
+            // Test Event 1 at index 2
+            // Consent Update at index 3
+            // Test Event 2 at index 4
+            mockDataLayer.length.should.eql(5);
+            mockDataLayer[3][0].should.equal('consent');
+            mockDataLayer[3][1].should.equal('update');
+            mockDataLayer[3][2].should.deepEqual(expectedDataLayerFinal[2]);
+
+            mockDataLayer[4].should.have.property('event');
+
+            done();
+        });
+
+        it('should construct a Consent State Update Payload with Consent Setting Defaults when consent changes', (done) => {
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                    consentMappingWeb: JSON.stringify(consentMap),
+                    defaultAdUserDataConsentWeb: 'Granted', // Will be overriden by User Consent State
+                    defaultAdPersonalizationConsentWeb: 'Granted', // Will be overriden by User Consent State
+                    defaultAdStorageConsentWeb: 'Granted',
+                    defaultAnalyticsStorageConsentWeb: 'Granted',
+                },
+                reportService.cb,
+                true
+            );
+
+            var expectedDataLayerBefore = [
+                'consent',
+                'update',
+                {
+                    ad_personalization: 'denied', // From User Consent State
+                    ad_user_data: 'denied', // From User Consent State
+                    ad_storage: 'granted', // From Consent Settings
+                    analytics_storage: 'granted', // From Consent Settings
+                },
+            ];
+
+            mockDataLayer.length.should.eql(1);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayerBefore[2]);
+
+            mParticle.forwarder.process({
+                EventName: 'Test Event 1',
+                EventDataType: MessageTypes.PageEvent,
+                EventCategory: mParticle.EventType.Unknown,
+                EventAttributes: {},
+                ConsentState: {
+                    getGDPRConsentState: function () {
+                        return {
+                            some_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'some_consent',
+                            },
+                            ignored_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'ignored_consent',
+                            },
+                            test_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'test_consent',
+                            },
+                        };
+                    },
+
+                    getCCPAConsentState: function () {
+                        return {
+                            data_sale_opt_out: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'data_sale_opt_out',
+                            },
+                        };
+                    },
+                },
+            });
+
+            var expectedDataLayerAfter = [
+                'consent',
+                'update',
+                {
+                    ad_personalization: 'granted', // From Event Consent State Change
+                    ad_user_data: 'granted', // From Event Consent State Change
+                    ad_storage: 'granted', // From Consent Settings
+                    analytics_storage: 'granted', // From Consent Settings
+                },
+            ];
+
+            // Data layer should have 3 elements:
+            // Consent Defaults at index 0
+            // Consent Update at index 1
+            // Test Event 1 at index 2
+            mockDataLayer.length.should.eql(3);
+            mockDataLayer[1][0].should.equal('consent');
+            mockDataLayer[1][1].should.equal('update');
+            mockDataLayer[1][2].should.deepEqual(expectedDataLayerAfter[2]);
+
+            mockDataLayer[2].should.have.property('event');
+
+            mParticle.forwarder.process({
+                EventName: 'Test Event',
+                EventDataType: MessageTypes.PageEvent,
+                EventCategory: mParticle.EventType.Unknown,
+                ConsentState: {
+                    getGDPRConsentState: function () {
+                        return {
+                            some_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'some_consent',
+                            },
+                            ignored_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'ignored_consent',
+                            },
+                            test_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'test_consent',
+                            },
+                            other_test_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'other_test_consent',
+                            },
+                            storage_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'storage_consent',
+                            },
+                        };
+                    },
+
+                    getCCPAConsentState: function () {
+                        return {
+                            data_sale_opt_out: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'data_sale_opt_out',
+                            },
+                        };
+                    },
+                },
+            });
+
+            var expectedDataLayerFinal = [
+                'consent',
+                'update',
+                {
+                    ad_personalization: 'granted', // From Previous Event State Change
+                    ad_storage: 'granted', // From Previous Event State Change
+                    ad_user_data: 'granted', // From Consent Settings
+                    analytics_storage: 'denied', // From FinalEvent Consent State Change
+                },
+            ];
+
+            // Data layer should have 3 elements:
+            // Consent Defaults at index 0
+            // Consent Update at index 1
+            // Test Event 1 at index 2
+            // Consent Update at index 3
+            // Test Event 2 at index 4
+            mockDataLayer.length.should.eql(5);
+            mockDataLayer[3][0].should.equal('consent');
+            mockDataLayer[3][1].should.equal('update');
+            mockDataLayer[3][2].should.deepEqual(expectedDataLayerFinal[2]);
+
+            mockDataLayer[4].should.have.property('event');
+
+            done();
+        });
+
+        it('should NOT construct a Consent State Update Payload if consent DOES NOT change', (done) => {
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                    consentMappingWeb: JSON.stringify(consentMap),
+                },
+                reportService.cb,
+                true
+            );
+
+            var expectedDataLayerBefore = [
+                'consent',
+                'update',
+                {
+                    ad_user_data: 'denied',
+                    ad_personalization: 'denied',
+                },
+            ];
+
+            mockDataLayer.length.should.eql(1);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayerBefore[2]);
+
+            mParticle.forwarder.process({
+                EventName: 'Test Event 1',
+                EventDataType: MessageTypes.PageEvent,
+                EventCategory: mParticle.EventType.Unknown,
+                ConsentState: {
+                    getGDPRConsentState: function () {
+                        return {
+                            some_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'some_consent',
+                            },
+                            test_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'test_consent',
+                            },
+                        };
+                    },
+                },
+            });
+
+            // dataLayer should have 2 elements:
+            // Consent Defaults at index 0
+            // Test Event 1 at index 1
+            mockDataLayer.length.should.eql(2);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayerBefore[2]);
+
+            mockDataLayer[1].should.have.property('event');
+
+            done();
+        });
+
+        it('should NOT construct any Consent State Payload if consent mappings and settings are undefined', (done) => {
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                },
+                reportService.cb,
+                true
+            );
+
+            mockDataLayer.length.should.eql(0);
+
+            mParticle.forwarder.process({
+                EventName: 'Test Event 1',
+                EventDataType: MessageTypes.PageEvent,
+                EventCategory: mParticle.EventType.Unknown,
+                ConsentState: {
+                    getGDPRConsentState: function () {
+                        return {
+                            some_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'some_consent',
+                            },
+                            ignored_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'ignored_consent',
+                            },
+                            test_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'test_consent',
+                            },
+                            other_test_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'other_test_consent',
+                            },
+                            storage_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'storage_consent',
+                            },
+                        };
+                    },
+
+                    getCCPAConsentState: function () {
+                        return {
+                            data_sale_opt_out: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'data_sale_opt_out',
+                            },
+                        };
+                    },
+                },
+            });
+
+            // dataLayer should have 1 element:
+            // Test Event 1 at index 0
+            mockDataLayer.length.should.eql(1);
+            mockDataLayer[0].should.have.property('event');
+
+            done();
+        });
+
+        it('should construct Consent State Payloads if consent mappings is undefined but settings defaults are defined', (done) => {
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                    defaultAdUserDataConsentWeb: 'Granted',
+                    defaultAdPersonalizationConsentWeb: 'Denied',
+                    defaultAdStorageConsentWeb: 'Granted',
+                    defaultAnalyticsStorageConsentWeb: 'Denied',
+                },
+                reportService.cb,
+                true
+            );
+
+            var expectedDataLayerBefore = [
+                'consent',
+                'default',
+                {
+                    ad_user_data: 'granted',
+                    ad_personalization: 'denied',
+                    ad_storage: 'granted',
+                    analytics_storage: 'denied',
+                },
+            ];
+
+            mockDataLayer.length.should.eql(1);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayerBefore[2]);
+
+            mParticle.forwarder.process({
+                EventName: 'Test Event 1',
+                EventDataType: MessageTypes.PageEvent,
+                EventCategory: mParticle.EventType.Unknown,
+                ConsentState: {
+                    getGDPRConsentState: function () {
+                        return {
+                            some_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'some_consent',
+                            },
+                            ignored_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'ignored_consent',
+                            },
+                            test_consent: {
+                                Consented: true,
+                                Timestamp: Date.now(),
+                                Document: 'test_consent',
+                            },
+                        };
+                    },
+
+                    getCCPAConsentState: function () {
+                        return {
+                            data_sale_opt_out: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'data_sale_opt_out',
+                            },
+                        };
+                    },
+                },
+            });
+
+            // dataLayer should have 2 elements:
+            // Consent Defaults at index 0
+            // Test Event 1 at index 1
+            mockDataLayer.length.should.eql(2);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayerBefore[2]);
+
+            mockDataLayer[1].should.have.property('event');
+
             done();
         });
     });
