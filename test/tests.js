@@ -1766,7 +1766,7 @@ describe('GoogleTagManager Forwarder', function() {
             done();
         });
 
-        it('should ignore Unspecified Consent Settings if NOT explicitely defined in Consent State', (done) => {
+        it('should ignore Unspecified Consent Settings if NOT explicitly defined in Consent State', (done) => {
             mParticle.forwarder.init(
                 {
                     dataLayerName: 'mparticle_data_layer',
