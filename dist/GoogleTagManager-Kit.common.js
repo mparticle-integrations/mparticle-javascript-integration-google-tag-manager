@@ -2,8 +2,125 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
+var googleConsentValues = {
+    // Server Integration uses 'Unspecified' as a value when the setting is 'not set'.
+    // However, this is not used by Google's Web SDK. We are referencing it here as a comment
+    // as a record of this distinction and for posterity.
+    // If Google ever adds this for web, the line can just be uncommented to support this.
+    //
+    // Docs:
+    // Web: https://developers.google.com/tag-platform/gtagjs/reference#consent
+    // S2S: https://developers.google.com/google-ads/api/reference/rpc/v15/ConsentStatusEnum.ConsentStatus
+    //
+    // Unspecified: 'unspecified',
+    Denied: 'denied',
+    Granted: 'granted',
+};
+
+// Declares list of valid Google Consent Properties
+var googleConsentProperties = [
+    'ad_storage',
+    'ad_user_data',
+    'ad_personalization',
+    'analytics_storage',
+];
+
+function ConsentHandler(common) {
+    this.common = common || {};
+}
+
+ConsentHandler.prototype.getUserConsentState = function () {
+    var userConsentState = {};
+
+    if (mParticle.Identity && mParticle.Identity.getCurrentUser) {
+        var currentUser = mParticle.Identity.getCurrentUser();
+
+        if (!currentUser) {
+            return {};
+        }
+
+        var consentState =
+            mParticle.Identity.getCurrentUser().getConsentState();
+
+        if (consentState && consentState.getGDPRConsentState) {
+            userConsentState = consentState.getGDPRConsentState();
+        }
+    }
+
+    return userConsentState;
+};
+
+ConsentHandler.prototype.getEventConsentState = function (eventConsentState) {
+    return eventConsentState && eventConsentState.getGDPRConsentState
+        ? eventConsentState.getGDPRConsentState()
+        : {};
+};
+
+ConsentHandler.prototype.getConsentSettings = function () {
+    var consentSettings = {};
+
+    var googleToMpConsentSettingsMapping = {
+        ad_user_data: 'defaultAdUserDataConsentWeb',
+        ad_personalization: 'defaultAdPersonalizationConsentWeb',
+        ad_storage: 'defaultAdStorageConsentWeb',
+        analytics_storage: 'defaultAnalyticsStorageConsentWeb',
+    };
+
+    var settings = this.common.settings;
+
+    Object.keys(googleToMpConsentSettingsMapping).forEach(function (
+        googleConsentKey
+    ) {
+        var mpConsentSettingKey =
+            googleToMpConsentSettingsMapping[googleConsentKey];
+        var googleConsentValuesKey = settings[mpConsentSettingKey];
+
+        if (googleConsentValuesKey && mpConsentSettingKey) {
+            consentSettings[googleConsentKey] =
+                googleConsentValues[googleConsentValuesKey];
+        }
+    });
+
+    return consentSettings;
+};
+
+ConsentHandler.prototype.generateConsentStatePayloadFromMappings = function (
+    consentState,
+    mappings
+) {
+    if (!mappings) return {};
+
+    var payload = this.common.cloneObject(this.common.consentPayloadDefaults);
+
+    for (var i = 0; i <= mappings.length - 1; i++) {
+        var mappingEntry = mappings[i];
+        var mpMappedConsentName = mappingEntry.map;
+        var googleMappedConsentName = mappingEntry.value;
+
+        if (
+            consentState[mpMappedConsentName] &&
+            googleConsentProperties.indexOf(googleMappedConsentName) !== -1
+        ) {
+            payload[googleMappedConsentName] = consentState[mpMappedConsentName]
+                .Consented
+                ? googleConsentValues.Granted
+                : googleConsentValues.Denied;
+        }
+    }
+
+    return payload;
+};
+
+var consent = ConsentHandler;
+
 function Common() {
     this.customDataLayerName = null;
+
+    this.consentMappings = [];
+    this.consentPayloadDefaults = {};
+    this.consentPayloadAsString = '';
+
+    this.consentHandler = new consent(this);
 }
 
 Common.prototype.buildMPID = function(event, user) {
@@ -120,6 +237,26 @@ Common.prototype.send = function(_attributes) {
     }
 
     window[this.customDataLayerName].push(payload);
+};
+
+Common.prototype.sendConsent = function (type, payload) {
+    // Google Tag Manager doesn't directly use the gtag function
+    // but recommends pushing directly into the dataLayer
+    // https://developers.google.com/tag-manager/devguide
+    var customDataLayerName = this.customDataLayerName;
+    function customDataLayer() {
+        window[customDataLayerName].push(arguments);
+    }
+
+    customDataLayer('consent', type, payload);
+};
+
+Common.prototype.cloneObject = function (obj) {
+    return JSON.parse(JSON.stringify(obj));
+};
+
+Common.prototype.isEmpty = function isEmpty(value) {
+    return value == null || !(Object.keys(value) || value).length;
 };
 
 var common = Common;
@@ -439,9 +576,36 @@ function EventHandler(common) {
     this.common = common || {};
 }
 
-EventHandler.prototype.logEvent = function(event) {
+EventHandler.prototype.maybeSendConsentUpdateToGoogle = function (event) {
+    // If consent payload is empty,
+    // we never sent an initial default consent state
+    // so we shouldn't send an update.
+    if (this.common.consentPayloadAsString && this.common.consentMappings) {
+        var eventConsentState = this.common.consentHandler.getEventConsentState(
+            event.ConsentState
+        );
+
+        if (!this.common.isEmpty(eventConsentState)) {
+            var updatedConsentPayload =
+                this.common.consentHandler.generateConsentStatePayloadFromMappings(
+                    eventConsentState,
+                    this.common.consentMappings
+                );
+
+            var eventConsentAsString = JSON.stringify(updatedConsentPayload);
+
+            if (eventConsentAsString !== this.common.consentPayloadAsString) {
+                this.common.sendConsent('update', updatedConsentPayload);
+                this.common.consentPayloadAsString = eventConsentAsString;
+            }
+        }
+    }
+};
+
+EventHandler.prototype.logEvent = function (event) {
+    this.maybeSendConsentUpdateToGoogle(event);
     this.common.send({
-        event: event
+        event: event,
     });
 
     return true;
@@ -449,7 +613,8 @@ EventHandler.prototype.logEvent = function(event) {
 
 EventHandler.prototype.logError = function() {};
 
-EventHandler.prototype.logPageView = function(event) {
+EventHandler.prototype.logPageView = function (event) {
+    this.maybeSendConsentUpdateToGoogle(event);
     this.common.send({
         event: event,
         eventType: 'screen_view'
@@ -562,6 +727,20 @@ var initialization = {
         isInitialized,
         common
     ) {
+        common.settings = settings;
+
+        if (common.settings.consentMappingWeb) {
+            common.consentMappings = parseSettingsString(
+                common.settings.consentMappingWeb
+            );
+        } else {
+            // Ensures consent mappings is an empty array
+            // for future use
+            common.consentMappings = [];
+            common.consentPayloadDefaults = {};
+            common.consentPayloadAsString = '';
+        }
+
         var containerId = sanitizeContainerId(settings.containerId);
 
         if (!containerId) {
@@ -596,15 +775,32 @@ var initialization = {
 
         if (testMode || !includeContainer) {
             isInitialized = true;
-            return;
+        } else {
+            isInitialized = initializeContainer(
+                containerId,
+                common.customDataLayerName,
+                previewUrl
+            );
         }
 
-        isInitialized = initializeContainer(
-            containerId,
-            common.customDataLayerName,
-            previewUrl
-        );
-    }
+        common.consentPayloadDefaults =
+            common.consentHandler.getConsentSettings();
+        var initialConsentState = common.consentHandler.getUserConsentState();
+
+        var defaultConsentPayload =
+            common.consentHandler.generateConsentStatePayloadFromMappings(
+                initialConsentState,
+                common.consentMappings
+            );
+
+        if (!common.isEmpty(defaultConsentPayload)) {
+            common.consentPayloadAsString = JSON.stringify(
+                defaultConsentPayload
+            );
+
+            common.sendConsent('default', defaultConsentPayload);
+        }
+    },
 };
 
 function initializeContainer(containerId, dataLayerName, previewUrl) {
@@ -680,8 +876,13 @@ function sanitizeDataLayerName(_dataLayerName) {
 
 function sanitizePreviewUrl(_previewUrl) {
     var previewUrl = _previewUrl || '';
-    var regex = /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/gm;
+    var regex =
+        /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/gm;
     return previewUrl.trim().match(regex) ? previewUrl.trim() : '';
+}
+
+function parseSettingsString(settingsString) {
+    return JSON.parse(settingsString.replace(/&quot;/g, '"'));
 }
 
 var initialization_1 = initialization;
