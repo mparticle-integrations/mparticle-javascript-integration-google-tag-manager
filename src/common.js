@@ -1,5 +1,12 @@
+var ConsentHandler = require('./consent');
 function Common() {
     this.customDataLayerName = null;
+
+    this.consentMappings = [];
+    this.consentPayloadDefaults = {};
+    this.consentPayloadAsString = '';
+
+    this.consentHandler = new ConsentHandler(this);
 }
 
 Common.prototype.buildMPID = function(event, user) {
@@ -116,6 +123,26 @@ Common.prototype.send = function(_attributes) {
     }
 
     window[this.customDataLayerName].push(payload);
+};
+
+Common.prototype.sendConsent = function (type, payload) {
+    // Google Tag Manager doesn't directly use the gtag function
+    // but recommends pushing directly into the dataLayer
+    // https://developers.google.com/tag-manager/devguide
+    var customDataLayerName = this.customDataLayerName;
+    function customDataLayer() {
+        window[customDataLayerName].push(arguments);
+    }
+
+    customDataLayer('consent', type, payload);
+};
+
+Common.prototype.cloneObject = function (obj) {
+    return JSON.parse(JSON.stringify(obj));
+};
+
+Common.prototype.isEmpty = function isEmpty(value) {
+    return value == null || !(Object.keys(value) || value).length;
 };
 
 module.exports = Common;

@@ -11,6 +11,20 @@ var initialization = {
         isInitialized,
         common
     ) {
+        common.settings = settings;
+
+        if (common.settings.consentMappingWeb) {
+            common.consentMappings = parseSettingsString(
+                common.settings.consentMappingWeb
+            );
+        } else {
+            // Ensures consent mappings is an empty array
+            // for future use
+            common.consentMappings = [];
+            common.consentPayloadDefaults = {};
+            common.consentPayloadAsString = '';
+        }
+
         var containerId = sanitizeContainerId(settings.containerId);
 
         if (!containerId) {
@@ -45,15 +59,32 @@ var initialization = {
 
         if (testMode || !includeContainer) {
             isInitialized = true;
-            return;
+        } else {
+            isInitialized = initializeContainer(
+                containerId,
+                common.customDataLayerName,
+                previewUrl
+            );
         }
 
-        isInitialized = initializeContainer(
-            containerId,
-            common.customDataLayerName,
-            previewUrl
-        );
-    }
+        common.consentPayloadDefaults =
+            common.consentHandler.getConsentSettings();
+        var initialConsentState = common.consentHandler.getUserConsentState();
+
+        var defaultConsentPayload =
+            common.consentHandler.generateConsentStatePayloadFromMappings(
+                initialConsentState,
+                common.consentMappings
+            );
+
+        if (!common.isEmpty(defaultConsentPayload)) {
+            common.consentPayloadAsString = JSON.stringify(
+                defaultConsentPayload
+            );
+
+            common.sendConsent('default', defaultConsentPayload);
+        }
+    },
 };
 
 function initializeContainer(containerId, dataLayerName, previewUrl) {
@@ -129,8 +160,13 @@ function sanitizeDataLayerName(_dataLayerName) {
 
 function sanitizePreviewUrl(_previewUrl) {
     var previewUrl = _previewUrl || '';
-    var regex = /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/gm;
+    var regex =
+        /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w\.-]+)+[\w\-\._~:/?#[\]@!\$&'\(\)\*\+,;=.]+$/gm;
     return previewUrl.trim().match(regex) ? previewUrl.trim() : '';
+}
+
+function parseSettingsString(settingsString) {
+    return JSON.parse(settingsString.replace(/&quot;/g, '"'));
 }
 
 module.exports = initialization;
