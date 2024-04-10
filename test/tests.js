@@ -1608,37 +1608,37 @@ describe('GoogleTagManager Forwarder', function() {
         var consentMap = [
             {
                 jsmap: null,
-                map: 'some_consent',
+                map: 'Some_consent',
                 maptype: 'ConsentPurposes',
                 value: 'ad_user_data',
             },
             {
                 jsmap: null,
-                map: 'storage_consent',
+                map: 'Storage_consent',
                 maptype: 'ConsentPurposes',
                 value: 'analytics_storage',
             },
             {
                 jsmap: null,
-                map: 'other_test_consent',
+                map: 'Other_test_consent',
                 maptype: 'ConsentPurposes',
                 value: 'ad_storage',
             },
             {
                 jsmap: null,
-                map: 'test_consent',
+                map: 'Test_consent',
                 maptype: 'ConsentPurposes',
                 value: 'ad_personalization',
             },
         ];
 
-        beforeEach(function () {
+        beforeEach(function() {
             mParticle.forwarders = [];
         });
 
-        afterEach(function () {});
+        afterEach(function() {});
 
-        it('should consolidate consent information', function (done) {
+        it('should consolidate consent information', function(done) {
             mParticle.forwarder.init(
                 {
                     dataLayerName: 'mparticle_data_layer',
@@ -1664,11 +1664,11 @@ describe('GoogleTagManager Forwarder', function() {
                                 Timestamp: 1557935884509,
                                 ConsentDocument: 'fake_consent_document',
                                 Location: 'This is fake',
-                                HardwareId: '123456'
-                            }
+                                HardwareId: '123456',
+                            },
                         };
-                    }
-                }
+                    },
+                },
             };
             var expectedEvent = {
                 event: 'Test User Action',
@@ -1676,7 +1676,7 @@ describe('GoogleTagManager Forwarder', function() {
                     device_application_stamp: '1234567890',
                     event: {
                         name: 'Test User Action',
-                        attributes: {}
+                        attributes: {},
                     },
                     user: {
                         mpid: '8675309',
@@ -1689,12 +1689,12 @@ describe('GoogleTagManager Forwarder', function() {
                                     Timestamp: 1557935884509,
                                     ConsentDocument: 'fake_consent_document',
                                     Location: 'This is fake',
-                                    HardwareId: '123456'
-                                }
-                            }
-                        }
-                    }
-                }
+                                    HardwareId: '123456',
+                                },
+                            },
+                        },
+                    },
+                },
             };
 
             mParticle.forwarder.process(event);
@@ -1704,13 +1704,13 @@ describe('GoogleTagManager Forwarder', function() {
             done();
         });
 
-        it('should construct a Default Consent State Payload from Mappings', function (done) {
+        it('should construct a Default Consent State Payload from Mappings', function(done) {
             mParticle.forwarder.init(
                 {
                     dataLayerName: 'mparticle_data_layer',
                     containerId: 'GTM-123123',
                     consentMappingWeb:
-                        '[{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;some_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_user_data&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;storage_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;analytics_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;other_test_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;test_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_personalization&quot;}]',
+                        '[{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Some_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_user_data&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Storage_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;analytics_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Other_test_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Test_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_personalization&quot;}]',
                 },
                 reportService.cb,
                 true

@@ -90,7 +90,7 @@ ConsentHandler.prototype.generateConsentStatePayloadFromMappings = function (
 
     for (var i = 0; i <= mappings.length - 1; i++) {
         var mappingEntry = mappings[i];
-        var mpMappedConsentName = mappingEntry.map;
+        var mpMappedConsentName = mappingEntry.map.toLowerCase();
         var googleMappedConsentName = mappingEntry.value;
 
         if (
