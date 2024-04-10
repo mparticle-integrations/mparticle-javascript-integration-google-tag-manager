@@ -25,7 +25,7 @@ jobs:
             - name: NPM install
               uses: actions/setup-node@v3
               with:
-                  node-version: 18.x
+                  node-version: node-latest
 
             - name: Run NPM CI
               run: npm ci
@@ -53,7 +53,7 @@ jobs:
             - name: Checkout development branch
               uses: actions/checkout@v3
               with:
-                  repository: mparticle-integrations/mparticle-javascript-integration-criteo
+                  repository: mparticle-integrations/mparticle-javascript-integration-google-tag-manager
                   ref: development
 
             - name: Create and push release branch
@@ -83,7 +83,7 @@ jobs:
                   ref: master
 
             - name: Import GPG Key
-              uses: crazy-max/ghaction-import-gpg@v4
+              uses: crazy-max/ghaction-import-gpg@1a317071222a9bfb1839df1b58b1f0dcd893b589
               with:
                   gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
                   passphrase: ${{ secrets.GPG_PASSPHRASE }}
@@ -96,7 +96,7 @@ jobs:
             - name: Setup Node.js
               uses: actions/setup-node@v3
               with:
-                  node-version: 16.x
+                  node-version: node-latest
 
             - name: Install dependencies
               run: npm ci
