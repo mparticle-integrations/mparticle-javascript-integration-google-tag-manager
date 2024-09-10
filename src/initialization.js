@@ -69,13 +69,14 @@ var initialization = {
 
         common.consentPayloadDefaults =
             common.consentHandler.getConsentSettings();
-        var initialConsentState = common.consentHandler.getUserConsentState();
 
-        var defaultConsentPayload =
-            common.consentHandler.generateConsentStatePayloadFromMappings(
-                initialConsentState,
-                common.consentMappings
-            );
+        var defaultConsentPayload = common.cloneObject(common.consentPayloadDefaults)
+        var updatedConsentState = common.consentHandler.getUserConsentState();
+        var updatedDefaultConsentPayload =
+        common.consentHandler.generateConsentStatePayloadFromMappings(
+            updatedConsentState,
+            common.consentMappings
+        );
 
         if (!common.isEmpty(defaultConsentPayload)) {
             common.consentPayloadAsString = JSON.stringify(
@@ -83,7 +84,16 @@ var initialization = {
             );
 
             common.sendConsent('default', defaultConsentPayload);
+        } else if (!common.isEmpty(updatedDefaultConsentPayload)) {
+            common.consentPayloadAsString = JSON.stringify(
+                updatedDefaultConsentPayload
+            );
+
+            common.sendConsent('default', updatedDefaultConsentPayload);
         }
+
+        common.maybeSendConsentUpdateToGoogle(updatedConsentState)
+            
     },
 };
 

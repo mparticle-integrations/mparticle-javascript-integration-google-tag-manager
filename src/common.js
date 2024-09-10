@@ -137,6 +137,35 @@ Common.prototype.sendConsent = function (type, payload) {
     customDataLayer('consent', type, payload);
 };
 
+Common.prototype.getEventConsentState = function (eventConsentState) {
+    return eventConsentState && eventConsentState.getGDPRConsentState
+        ? eventConsentState.getGDPRConsentState()
+        : {};
+};
+
+Common.prototype.maybeSendConsentUpdateToGoogle = function (consentState) {
+    // If consent payload is empty,
+    // we never sent an initial default consent state
+    // so we shouldn't send an update.
+    if (this.consentPayloadAsString && this.consentMappings) {
+
+        if (!this.isEmpty(consentState)) {
+            var updatedConsentPayload =
+                this.consentHandler.generateConsentStatePayloadFromMappings(
+                    consentState,
+                    this.consentMappings
+                );
+
+            var eventConsentAsString = JSON.stringify(updatedConsentPayload);
+
+            if (eventConsentAsString !== this.consentPayloadAsString) {
+                this.sendConsent('update', updatedConsentPayload);
+                this.consentPayloadAsString = eventConsentAsString;
+            }
+        }
+    }
+};
+
 Common.prototype.cloneObject = function (obj) {
     return JSON.parse(JSON.stringify(obj));
 };
