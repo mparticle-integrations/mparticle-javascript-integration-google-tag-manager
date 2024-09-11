@@ -147,24 +147,34 @@ Common.prototype.maybeSendConsentUpdateToGoogle = function (consentState) {
     // If consent payload is empty,
     // we never sent an initial default consent state
     // so we shouldn't send an update.
-    if (this.consentPayloadAsString && this.consentMappings) {
+    if (
+        this.consentPayloadAsString && 
+        this.consentMappings && 
+        !this.isEmpty(consentState)
+    ) {
+        var updatedConsentPayload =
+            this.consentHandler.generateConsentStatePayloadFromMappings(
+                consentState,
+                this.consentMappings
+            );
 
-        if (!this.isEmpty(consentState)) {
-            var updatedConsentPayload =
-                this.consentHandler.generateConsentStatePayloadFromMappings(
-                    consentState,
-                    this.consentMappings
-                );
+        var eventConsentAsString = JSON.stringify(updatedConsentPayload);
 
-            var eventConsentAsString = JSON.stringify(updatedConsentPayload);
-
-            if (eventConsentAsString !== this.consentPayloadAsString) {
-                this.sendConsent('update', updatedConsentPayload);
-                this.consentPayloadAsString = eventConsentAsString;
-            }
+        if (eventConsentAsString !== this.consentPayloadAsString) {
+            this.sendConsent('update', updatedConsentPayload);
+            this.consentPayloadAsString = eventConsentAsString;
         }
+        
     }
 };
+
+Common.prototype.sendDefaultConsentPayloadToGoogle = function (consentPayload) {
+    this.consentPayloadAsString = JSON.stringify(
+        consentPayload
+    );
+
+    this.sendConsent('default', consentPayload);
+}
 
 Common.prototype.cloneObject = function (obj) {
     return JSON.parse(JSON.stringify(obj));
