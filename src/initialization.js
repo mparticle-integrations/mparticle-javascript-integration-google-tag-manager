@@ -70,13 +70,13 @@ var initialization = {
         common.consentPayloadDefaults =
             common.consentHandler.getConsentSettings();
 
-        var defaultConsentPayload = common.cloneObject(common.consentPayloadDefaults),
-            updatedConsentState = common.consentHandler.getUserConsentState(),
-            updatedDefaultConsentPayload =
-        common.consentHandler.generateConsentStatePayloadFromMappings(
-            updatedConsentState,
-            common.consentMappings
-        );
+        var defaultConsentPayload = common.cloneObject(common.consentPayloadDefaults);
+        var updatedConsentState = common.consentHandler.getUserConsentState();
+        var  updatedDefaultConsentPayload =
+            common.consentHandler.generateConsentStatePayloadFromMappings(
+                updatedConsentState,
+                common.consentMappings
+            );
 
         if (!common.isEmpty(defaultConsentPayload)) {
             common.sendDefaultConsentPayloadToGoogle(defaultConsentPayload)
