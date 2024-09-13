@@ -72,7 +72,7 @@ var initialization = {
 
         var defaultConsentPayload = common.cloneObject(common.consentPayloadDefaults);
         var updatedConsentState = common.consentHandler.getUserConsentState();
-        var  updatedDefaultConsentPayload =
+        var updatedDefaultConsentPayload =
             common.consentHandler.generateConsentStatePayloadFromMappings(
                 updatedConsentState,
                 common.consentMappings
