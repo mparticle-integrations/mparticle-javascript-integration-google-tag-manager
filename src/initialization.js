@@ -78,13 +78,16 @@ var initialization = {
                 common.consentMappings
             );
 
+        // If a default consent payload exists (as selected in the mParticle UI), set it as the default
         if (!common.isEmpty(defaultConsentPayload)) {
-            common.sendDefaultConsentPayloadToGoogle(defaultConsentPayload)
+            common.sendDefaultConsentPayloadToGoogle(defaultConsentPayload);
+        // If a default consent payload does not exist, but the user currently has updated their consent,
+        // send that as the default because a default must be sent
         } else if (!common.isEmpty(updatedDefaultConsentPayload)) {
-            common.sendDefaultConsentPayloadToGoogle(updatedDefaultConsentPayload)
+            common.sendDefaultConsentPayloadToGoogle(updatedDefaultConsentPayload);
         }
 
-        common.maybeSendConsentUpdateToGoogle(updatedConsentState)
+        common.maybeSendConsentUpdateToGoogle(updatedConsentState);
             
     },
 };

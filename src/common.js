@@ -164,7 +164,6 @@ Common.prototype.maybeSendConsentUpdateToGoogle = function (consentState) {
             this.sendConsent('update', updatedConsentPayload);
             this.consentPayloadAsString = eventConsentAsString;
         }
-        
     }
 };
 
