@@ -49,12 +49,6 @@ var GoogleTagManagerKit = (function (exports) {
         return userConsentState;
     };
 
-    ConsentHandler.prototype.getEventConsentState = function (eventConsentState) {
-        return eventConsentState && eventConsentState.getGDPRConsentState
-            ? eventConsentState.getGDPRConsentState()
-            : {};
-    };
-
     ConsentHandler.prototype.getConsentSettings = function () {
         var consentSettings = {};
 
@@ -248,6 +242,44 @@ var GoogleTagManagerKit = (function (exports) {
         }
 
         customDataLayer('consent', type, payload);
+    };
+
+    Common.prototype.getEventConsentState = function (eventConsentState) {
+        return eventConsentState && eventConsentState.getGDPRConsentState
+            ? eventConsentState.getGDPRConsentState()
+            : {};
+    };
+
+    Common.prototype.maybeSendConsentUpdateToGoogle = function (consentState) {
+        // If consent payload is empty,
+        // we never sent an initial default consent state
+        // so we shouldn't send an update.
+        if (
+            this.consentPayloadAsString && 
+            this.consentMappings && 
+            !this.isEmpty(consentState)
+        ) {
+            var updatedConsentPayload =
+                this.consentHandler.generateConsentStatePayloadFromMappings(
+                    consentState,
+                    this.consentMappings
+                );
+
+            var eventConsentAsString = JSON.stringify(updatedConsentPayload);
+
+            if (eventConsentAsString !== this.consentPayloadAsString) {
+                this.sendConsent('update', updatedConsentPayload);
+                this.consentPayloadAsString = eventConsentAsString;
+            }
+        }
+    };
+
+    Common.prototype.sendDefaultConsentPayloadToGoogle = function (consentPayload) {
+        this.consentPayloadAsString = JSON.stringify(
+            consentPayload
+        );
+
+        this.sendConsent('default', consentPayload);
     };
 
     Common.prototype.cloneObject = function (obj) {
@@ -575,34 +607,11 @@ var GoogleTagManagerKit = (function (exports) {
         this.common = common || {};
     }
 
-    EventHandler.prototype.maybeSendConsentUpdateToGoogle = function (event) {
-        // If consent payload is empty,
-        // we never sent an initial default consent state
-        // so we shouldn't send an update.
-        if (this.common.consentPayloadAsString && this.common.consentMappings) {
-            var eventConsentState = this.common.consentHandler.getEventConsentState(
-                event.ConsentState
-            );
-
-            if (!this.common.isEmpty(eventConsentState)) {
-                var updatedConsentPayload =
-                    this.common.consentHandler.generateConsentStatePayloadFromMappings(
-                        eventConsentState,
-                        this.common.consentMappings
-                    );
-
-                var eventConsentAsString = JSON.stringify(updatedConsentPayload);
-
-                if (eventConsentAsString !== this.common.consentPayloadAsString) {
-                    this.common.sendConsent('update', updatedConsentPayload);
-                    this.common.consentPayloadAsString = eventConsentAsString;
-                }
-            }
-        }
-    };
-
     EventHandler.prototype.logEvent = function (event) {
-        this.maybeSendConsentUpdateToGoogle(event);
+        var eventConsentState = this.common.getEventConsentState(
+            event.ConsentState
+        );
+        this.common.maybeSendConsentUpdateToGoogle(eventConsentState);
         this.common.send({
             event: event,
         });
@@ -613,7 +622,10 @@ var GoogleTagManagerKit = (function (exports) {
     EventHandler.prototype.logError = function() {};
 
     EventHandler.prototype.logPageView = function (event) {
-        this.maybeSendConsentUpdateToGoogle(event);
+        var eventConsentState = this.common.getEventConsentState(
+            event.ConsentState
+        );
+        this.common.maybeSendConsentUpdateToGoogle(eventConsentState);
         this.common.send({
             event: event,
             eventType: 'screen_view'
@@ -784,21 +796,26 @@ var GoogleTagManagerKit = (function (exports) {
 
             common.consentPayloadDefaults =
                 common.consentHandler.getConsentSettings();
-            var initialConsentState = common.consentHandler.getUserConsentState();
 
-            var defaultConsentPayload =
+            var defaultConsentPayload = common.cloneObject(common.consentPayloadDefaults);
+            var updatedConsentState = common.consentHandler.getUserConsentState();
+            var updatedDefaultConsentPayload =
                 common.consentHandler.generateConsentStatePayloadFromMappings(
-                    initialConsentState,
+                    updatedConsentState,
                     common.consentMappings
                 );
 
+            // If a default consent payload exists (as selected in the mParticle UI), set it as the default
             if (!common.isEmpty(defaultConsentPayload)) {
-                common.consentPayloadAsString = JSON.stringify(
-                    defaultConsentPayload
-                );
-
-                common.sendConsent('default', defaultConsentPayload);
+                common.sendDefaultConsentPayloadToGoogle(defaultConsentPayload);
+            // If a default consent payload does not exist, but the user currently has updated their consent,
+            // send that as the default because a default must be sent
+            } else if (!common.isEmpty(updatedDefaultConsentPayload)) {
+                common.sendDefaultConsentPayloadToGoogle(updatedDefaultConsentPayload);
             }
+
+            common.maybeSendConsentUpdateToGoogle(updatedConsentState);
+                
         },
     };
 
