@@ -1732,7 +1732,7 @@ describe('GoogleTagManager Forwarder', function() {
             done();
         });
 
-        it('should merge Consent Setting Defaults with User Consent State to construct a Default Consent State', (done) => {
+        it('should construct a Default Consent State Payload from Default Settings and construct an Update Consent State Payload from Mappings', (done) => {
             mParticle.forwarder.init(
                 {
                     dataLayerName: 'mparticle_data_layer',
@@ -1747,9 +1747,22 @@ describe('GoogleTagManager Forwarder', function() {
                 true
             );
 
-            var expectedDataLayer = [
+            // default consent payload from Default Settings sent first
+            var expectedDataLayer1 = [
                 'consent',
                 'default',
+                {
+                    ad_personalization: 'granted', // From Consent Settings
+                    ad_user_data: 'granted', // From Consent Settings
+                    ad_storage: 'granted', // From Consent Settings
+                    analytics_storage: 'granted', // From Consent Settings
+                },
+            ];
+
+            // updated consent payload from mappings sent after
+            var expectedDataLayer2 = [
+                'consent',
+                'update',
                 {
                     ad_personalization: 'denied', // From User Consent State
                     ad_user_data: 'denied', // From User Consent State
@@ -1758,10 +1771,13 @@ describe('GoogleTagManager Forwarder', function() {
                 },
             ];
 
-            mockDataLayer.length.should.eql(1);
+            mockDataLayer.length.should.eql(2);
             mockDataLayer[0][0].should.equal('consent');
             mockDataLayer[0][1].should.equal('default');
-            mockDataLayer[0][2].should.deepEqual(expectedDataLayer[2]);
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayer1[2]);
+            mockDataLayer[1][0].should.equal('consent');
+            mockDataLayer[1][1].should.equal('update');
+            mockDataLayer[1][2].should.deepEqual(expectedDataLayer2[2]);
 
             done();
         });
@@ -1969,7 +1985,20 @@ describe('GoogleTagManager Forwarder', function() {
                 true
             );
 
-            var expectedDataLayerBefore = [
+            // default consent payload from Default Settings sent first
+            var expectedDataLayerBefore1 = [
+                'consent',
+                'update',
+                {
+                    ad_personalization: 'granted', // From Consent Settings
+                    ad_user_data: 'granted', // From Consent Settings
+                    ad_storage: 'granted', // From Consent Settings
+                    analytics_storage: 'granted', // From Consent Settings
+                },
+            ];
+
+            // updated consent payload from mappings sent after
+            var expectedDataLayerBefore2 = [
                 'consent',
                 'update',
                 {
@@ -1980,10 +2009,13 @@ describe('GoogleTagManager Forwarder', function() {
                 },
             ];
 
-            mockDataLayer.length.should.eql(1);
+            mockDataLayer.length.should.eql(2);
             mockDataLayer[0][0].should.equal('consent');
             mockDataLayer[0][1].should.equal('default');
-            mockDataLayer[0][2].should.deepEqual(expectedDataLayerBefore[2]);
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayerBefore1[2]);
+            mockDataLayer[1][0].should.equal('consent');
+            mockDataLayer[1][1].should.equal('update');
+            mockDataLayer[1][2].should.deepEqual(expectedDataLayerBefore2[2]);
 
             mParticle.forwarder.process({
                 EventName: 'Test Event 1',
@@ -2038,12 +2070,12 @@ describe('GoogleTagManager Forwarder', function() {
             // Consent Defaults at index 0
             // Consent Update at index 1
             // Test Event 1 at index 2
-            mockDataLayer.length.should.eql(3);
-            mockDataLayer[1][0].should.equal('consent');
-            mockDataLayer[1][1].should.equal('update');
-            mockDataLayer[1][2].should.deepEqual(expectedDataLayerAfter[2]);
+            mockDataLayer.length.should.eql(4);
+            mockDataLayer[2][0].should.equal('consent');
+            mockDataLayer[2][1].should.equal('update');
+            mockDataLayer[2][2].should.deepEqual(expectedDataLayerAfter[2]);
 
-            mockDataLayer[2].should.have.property('event');
+            mockDataLayer[3].should.have.property('event');
 
             mParticle.forwarder.process({
                 EventName: 'Test Event',
@@ -2109,12 +2141,12 @@ describe('GoogleTagManager Forwarder', function() {
             // Test Event 1 at index 2
             // Consent Update at index 3
             // Test Event 2 at index 4
-            mockDataLayer.length.should.eql(5);
-            mockDataLayer[3][0].should.equal('consent');
-            mockDataLayer[3][1].should.equal('update');
-            mockDataLayer[3][2].should.deepEqual(expectedDataLayerFinal[2]);
+            mockDataLayer.length.should.eql(6);
+            mockDataLayer[4][0].should.equal('consent');
+            mockDataLayer[4][1].should.equal('update');
+            mockDataLayer[4][2].should.deepEqual(expectedDataLayerFinal[2]);
 
-            mockDataLayer[4].should.have.property('event');
+            mockDataLayer[5].should.have.property('event');
 
             done();
         });
