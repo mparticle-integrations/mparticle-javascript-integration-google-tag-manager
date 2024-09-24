@@ -64,7 +64,7 @@ var initialization = {
                 containerId,
                 common.customDataLayerName,
                 previewUrl,
-                common.settings
+                common.settings.preventAutoBlock
             );
         }
 
@@ -92,7 +92,12 @@ var initialization = {
     },
 };
 
-function initializeContainer(containerId, dataLayerName, previewUrl, settings) {
+function initializeContainer(
+    containerId,
+    dataLayerName,
+    previewUrl,
+    preventAutoBlock
+) {
     var url = 'https://www.googletagmanager.com/gtm.js';
 
     // If Settings contains previewUrl, we should tack that onto the gtm snippet
@@ -107,12 +112,12 @@ function initializeContainer(containerId, dataLayerName, previewUrl, settings) {
 
     url += '&l=' + dataLayerName;
 
-    loadSnippet(url, dataLayerName, settings);
+    loadSnippet(url, dataLayerName, preventAutoBlock);
 
     return true;
 }
 
-function loadSnippet(url, dataLayerName, settings) {
+function loadSnippet(url, dataLayerName, preventAutoBlock) {
     window[dataLayerName].push({
         'gtm.start': new Date().getTime(),
         event: 'gtm.js',
@@ -122,7 +127,7 @@ function loadSnippet(url, dataLayerName, settings) {
     gTagScript.type = 'text/javascript';
     gTagScript.async = true;
     gTagScript.src = url;
-    if (settings.preventAutoBlock === 'True') {
+    if (preventAutoBlock === 'True') {
         gTagScript.setAttributeNode(
             window.document.createAttribute('data-ot-ignore')
         );
