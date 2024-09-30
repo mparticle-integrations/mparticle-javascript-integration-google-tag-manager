@@ -790,7 +790,8 @@ var GoogleTagManagerKit = (function (exports) {
                 isInitialized = initializeContainer(
                     containerId,
                     common.customDataLayerName,
-                    previewUrl
+                    previewUrl,
+                    common.settings.preventAutoBlock
                 );
             }
 
@@ -815,11 +816,15 @@ var GoogleTagManagerKit = (function (exports) {
             }
 
             common.maybeSendConsentUpdateToGoogle(updatedConsentState);
-                
         },
     };
 
-    function initializeContainer(containerId, dataLayerName, previewUrl) {
+    function initializeContainer(
+        containerId,
+        dataLayerName,
+        previewUrl,
+        preventAutoBlock
+    ) {
         var url = 'https://www.googletagmanager.com/gtm.js';
 
         // If Settings contains previewUrl, we should tack that onto the gtm snippet
@@ -834,21 +839,27 @@ var GoogleTagManagerKit = (function (exports) {
 
         url += '&l=' + dataLayerName;
 
-        loadSnippet(url, dataLayerName);
+        loadSnippet(url, dataLayerName, preventAutoBlock);
 
         return true;
     }
 
-    function loadSnippet(url, dataLayerName) {
+    function loadSnippet(url, dataLayerName, preventAutoBlock) {
         window[dataLayerName].push({
             'gtm.start': new Date().getTime(),
-            event: 'gtm.js'
+            event: 'gtm.js',
         });
 
         var gTagScript = document.createElement('script');
         gTagScript.type = 'text/javascript';
         gTagScript.async = true;
         gTagScript.src = url;
+        if (preventAutoBlock === 'True') {
+            gTagScript.setAttributeNode(
+                window.document.createAttribute('data-ot-ignore')
+            );
+        }
+
         (
             document.getElementsByTagName('head')[0] ||
             document.getElementsByTagName('body')[0]
