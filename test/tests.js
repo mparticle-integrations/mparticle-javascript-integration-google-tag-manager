@@ -2278,6 +2278,115 @@ describe('GoogleTagManager Forwarder', function() {
             done();
         });
 
+        it('should support functionality_storage, personalization_storage, and security_storage consent types', (done) => {
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                    defaultFunctionalityStorageConsentWeb: 'Granted',
+                    defaultPersonalizationStorageConsentWeb: 'Denied',
+                    defaultSecurityStorageConsentWeb: 'Granted',
+                },
+                reportService.cb,
+                true
+            );
+ 
+            var expectedDataLayer = [
+                'consent',
+                'default',
+                {
+                    functionality_storage: 'granted',
+                    personalization_storage: 'denied',
+                    security_storage: 'granted',
+                },
+            ];
+ 
+            mockDataLayer.length.should.eql(1);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayer[2]);
+ 
+            done();
+        });
+ 
+        it('should map functionality_storage, personalization_storage, and security_storage from consent mappings', (done) => {
+            var extendedConsentMap = consentMap.concat([
+                {
+                    jsmap: null,
+                    map: 'Functionality_consent',
+                    maptype: 'ConsentPurposes',
+                    value: 'functionality_storage',
+                },
+                {
+                    jsmap: null,
+                    map: 'Personalization_consent',
+                    maptype: 'ConsentPurposes',
+                    value: 'personalization_storage',
+                },
+                {
+                    jsmap: null,
+                    map: 'Security_consent',
+                    maptype: 'ConsentPurposes',
+                    value: 'security_storage',
+                },
+            ]);
+ 
+            mParticle.Identity.getCurrentUser = function () {
+                return {
+                    getConsentState: function () {
+                        return {
+                            getGDPRConsentState: function () {
+                                return {
+                                    functionality_consent: {
+                                        Consented: true,
+                                        Timestamp: Date.now(),
+                                        Document: 'functionality_consent',
+                                    },
+                                    personalization_consent: {
+                                        Consented: false,
+                                        Timestamp: Date.now(),
+                                        Document: 'personalization_consent',
+                                    },
+                                    security_consent: {
+                                        Consented: true,
+                                        Timestamp: Date.now(),
+                                        Document: 'security_consent',
+                                    },
+                                };
+                            },
+                        };
+                    },
+                };
+            };
+ 
+            mParticle.forwarder.init(
+                {
+                    dataLayerName: 'mparticle_data_layer',
+                    containerId: 'GTM-123123',
+                    consentMappingWeb: JSON.stringify(extendedConsentMap),
+                },
+                reportService.cb,
+                true
+            );
+ 
+            var expectedDataLayer = [
+                'consent',
+                'default',
+                {
+                    functionality_storage: 'granted',
+                    personalization_storage: 'denied',
+                    security_storage: 'granted',
+                },
+            ];
+
+            mockDataLayer.length.should.eql(1);
+            mockDataLayer[0][0].should.equal('consent');
+            mockDataLayer[0][1].should.equal('default');
+            
+            mockDataLayer[0][2].should.deepEqual(expectedDataLayer[2]);
+            done();
+        });
+ 
         it('should construct Consent State Payloads if consent mappings is undefined but settings defaults are defined', (done) => {
             mParticle.forwarder.init(
                 {
