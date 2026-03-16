@@ -22,6 +22,9 @@ var GoogleTagManagerKit = (function (exports) {
         'ad_user_data',
         'ad_personalization',
         'analytics_storage',
+        'functionality_storage',
+        'personalization_storage',
+        'security_storage',
     ];
 
     function ConsentHandler(common) {
@@ -57,6 +60,9 @@ var GoogleTagManagerKit = (function (exports) {
             ad_personalization: 'defaultAdPersonalizationConsentWeb',
             ad_storage: 'defaultAdStorageConsentWeb',
             analytics_storage: 'defaultAnalyticsStorageConsentWeb',
+            functionality_storage: 'defaultFunctionalityStorageConsentWeb',
+            personalization_storage: 'defaultPersonalizationStorageConsentWeb',
+            security_storage: 'defaultSecurityStorageConsentWeb',
         };
 
         var settings = this.common.settings;
