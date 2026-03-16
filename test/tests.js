@@ -57,6 +57,21 @@ describe('GoogleTagManager Forwarder', function() {
                                     Timestamp: 1,
                                     Document: 'test_consent',
                                 },
+                                functionality_consent: {
+                                    Consented: false,
+                                    Timestamp: 1,
+                                    Document: 'functionality_consent',
+                                },
+                                personalization_consent: {
+                                    Consented: false,
+                                    Timestamp: 1,
+                                    Document: 'personalization_consent',
+                                },
+                                security_consent: {
+                                    Consented: false,
+                                    Timestamp: 1,
+                                    Document: 'security_consent',
+                                },
                             };
                         },
                     };
@@ -1630,6 +1645,24 @@ describe('GoogleTagManager Forwarder', function() {
                 maptype: 'ConsentPurposes',
                 value: 'ad_personalization',
             },
+            {
+                jsmap: null,
+                map: 'Functionality_consent',
+                maptype: 'ConsentPurposes',
+                value: 'functionality_storage',
+            },
+            {
+                jsmap: null,
+                map: 'Personalization_consent',
+                maptype: 'ConsentPurposes',
+                value: 'personalization_storage',
+            },
+            {
+                jsmap: null,
+                map: 'Security_consent',
+                maptype: 'ConsentPurposes',
+                value: 'security_storage',
+            },
         ];
 
         beforeEach(function() {
@@ -1710,7 +1743,7 @@ describe('GoogleTagManager Forwarder', function() {
                     dataLayerName: 'mparticle_data_layer',
                     containerId: 'GTM-123123',
                     consentMappingWeb:
-                        '[{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Some_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_user_data&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Storage_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;analytics_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Other_test_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Test_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_personalization&quot;}]',
+                        '[{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Some_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_user_data&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Storage_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;analytics_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Other_test_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Test_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;ad_personalization&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Functionality_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;functionality_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Personalization_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;personalization_storage&quot;},{&quot;jsmap&quot;:null,&quot;map&quot;:&quot;Security_consent&quot;,&quot;maptype&quot;:&quot;ConsentPurposes&quot;,&quot;value&quot;:&quot;security_storage&quot;}]',
                 },
                 reportService.cb,
                 true
@@ -1722,6 +1755,9 @@ describe('GoogleTagManager Forwarder', function() {
                 {
                     ad_user_data: 'denied',
                     ad_personalization: 'denied',
+                    functionality_storage: 'denied',
+                    personalization_storage: 'denied',
+                    security_storage: 'denied',
                 },
             ];
 
@@ -1768,6 +1804,9 @@ describe('GoogleTagManager Forwarder', function() {
                     ad_user_data: 'denied', // From User Consent State
                     ad_storage: 'granted', // From Consent Settings
                     analytics_storage: 'granted', // From Consent Settings
+                    functionality_storage: 'denied', // From User Consent State
+                    personalization_storage: 'denied', // From User Consent State
+                    security_storage: 'denied', // From User Consent State
                 },
             ];
 
@@ -1803,6 +1842,9 @@ describe('GoogleTagManager Forwarder', function() {
                 {
                     ad_personalization: 'denied', // From User Consent State
                     ad_user_data: 'denied', // From User Consent State
+                    functionality_storage: 'denied', // From User Consent State
+                    personalization_storage: 'denied', // From User Consent State
+                    security_storage: 'denied', // From User Consent State
                 },
             ];
 
@@ -1831,6 +1873,9 @@ describe('GoogleTagManager Forwarder', function() {
                 {
                     ad_user_data: 'denied',
                     ad_personalization: 'denied',
+                    functionality_storage: 'denied',
+                    personalization_storage: 'denied',
+                    security_storage: 'denied',
                 },
             ];
 
@@ -2006,6 +2051,9 @@ describe('GoogleTagManager Forwarder', function() {
                     ad_user_data: 'denied', // From User Consent State
                     ad_storage: 'granted', // From Consent Settings
                     analytics_storage: 'granted', // From Consent Settings
+                    functionality_storage: 'denied', // From User Consent State
+                    personalization_storage: 'denied', // From User Consent State
+                    security_storage: 'denied', // From User Consent State
                 },
             ];
 
@@ -2168,6 +2216,9 @@ describe('GoogleTagManager Forwarder', function() {
                 {
                     ad_user_data: 'denied',
                     ad_personalization: 'denied',
+                    functionality_storage: 'denied',
+                    personalization_storage: 'denied',
+                    security_storage: 'denied',
                 },
             ];
 
@@ -2192,6 +2243,21 @@ describe('GoogleTagManager Forwarder', function() {
                                 Consented: false,
                                 Timestamp: Date.now(),
                                 Document: 'test_consent',
+                            },
+                            functionality_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'functionality_consent',
+                            },
+                            personalization_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'personalization_consent',
+                            },
+                            security_consent: {
+                                Consented: false,
+                                Timestamp: Date.now(),
+                                Document: 'security_consent',
                             },
                         };
                     },
@@ -2278,125 +2344,6 @@ describe('GoogleTagManager Forwarder', function() {
             done();
         });
 
-        it('should support functionality_storage, personalization_storage, and security_storage consent types', (done) => {
-            mParticle.forwarder.init(
-                {
-                    dataLayerName: 'mparticle_data_layer',
-                    containerId: 'GTM-123123',
-                    defaultFunctionalityStorageConsentWeb: 'Granted',
-                    defaultPersonalizationStorageConsentWeb: 'Denied',
-                    defaultSecurityStorageConsentWeb: 'Granted',
-                },
-                reportService.cb,
-                true
-            );
-
-            var expectedDataLayer = [
-                'consent',
-                'default',
-                {
-                    functionality_storage: 'granted',
-                    personalization_storage: 'denied',
-                    security_storage: 'granted',
-                },
-            ];
-
-            mockDataLayer.length.should.eql(1);
-            mockDataLayer[0][0].should.equal('consent');
-            mockDataLayer[0][1].should.equal('default');
-            mockDataLayer[0][2].should.deepEqual(expectedDataLayer[2]);
-
-            done();
-        });
-
-        describe('with functionality, personalization, and security consent state on current user', function () {
-            var originalGetCurrentUser;
-
-            beforeEach(function () {
-                originalGetCurrentUser = mParticle.Identity.getCurrentUser;
-                mParticle.Identity.getCurrentUser = function () {
-                    return {
-                        getConsentState: function () {
-                            return {
-                                getGDPRConsentState: function () {
-                                    return {
-                                        functionality_consent: {
-                                            Consented: true,
-                                            Timestamp: Date.now(),
-                                            Document: 'functionality_consent',
-                                        },
-                                        personalization_consent: {
-                                            Consented: false,
-                                            Timestamp: Date.now(),
-                                            Document: 'personalization_consent',
-                                        },
-                                        security_consent: {
-                                            Consented: true,
-                                            Timestamp: Date.now(),
-                                            Document: 'security_consent',
-                                        },
-                                    };
-                                },
-                            };
-                        },
-                    };
-                };
-            });
-
-            afterEach(function () {
-                mParticle.Identity.getCurrentUser = originalGetCurrentUser;
-            });
-
-            it('should map functionality_storage, personalization_storage, and security_storage from consent mappings', (done) => {
-                var extendedConsentMap = consentMap.concat([
-                    {
-                        jsmap: null,
-                        map: 'Functionality_consent',
-                        maptype: 'ConsentPurposes',
-                        value: 'functionality_storage',
-                    },
-                    {
-                        jsmap: null,
-                        map: 'Personalization_consent',
-                        maptype: 'ConsentPurposes',
-                        value: 'personalization_storage',
-                    },
-                    {
-                        jsmap: null,
-                        map: 'Security_consent',
-                        maptype: 'ConsentPurposes',
-                        value: 'security_storage',
-                    },
-                ]);
-
-                mParticle.forwarder.init(
-                    {
-                        dataLayerName: 'mparticle_data_layer',
-                        containerId: 'GTM-123123',
-                        consentMappingWeb: JSON.stringify(extendedConsentMap),
-                    },
-                    reportService.cb,
-                    true
-                );
-
-                var expectedDataLayer = [
-                    'consent',
-                    'default',
-                    {
-                        functionality_storage: 'granted',
-                        personalization_storage: 'denied',
-                        security_storage: 'granted',
-                    },
-                ];
-
-                mockDataLayer.length.should.eql(1);
-                mockDataLayer[0][0].should.equal('consent');
-                mockDataLayer[0][1].should.equal('default');
-                mockDataLayer[0][2].should.deepEqual(expectedDataLayer[2]);
-                done();
-            });
-        });
-
         it('should construct Consent State Payloads if consent mappings is undefined but settings defaults are defined', (done) => {
             mParticle.forwarder.init(
                 {
@@ -2406,6 +2353,9 @@ describe('GoogleTagManager Forwarder', function() {
                     defaultAdPersonalizationConsentWeb: 'Denied',
                     defaultAdStorageConsentWeb: 'Granted',
                     defaultAnalyticsStorageConsentWeb: 'Denied',
+                    defaultFunctionalityStorageConsentWeb: 'Granted',
+                    defaultPersonalizationStorageConsentWeb: 'Denied',
+                    defaultSecurityStorageConsentWeb: 'Granted',
                 },
                 reportService.cb,
                 true
@@ -2419,6 +2369,9 @@ describe('GoogleTagManager Forwarder', function() {
                     ad_personalization: 'denied',
                     ad_storage: 'granted',
                     analytics_storage: 'denied',
+                    functionality_storage: 'granted',
+                    personalization_storage: 'denied',
+                    security_storage: 'granted',
                 },
             ];
 
