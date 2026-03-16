@@ -44,6 +44,7 @@ module.exports = {
             '@semantic-release/exec',
             {
                 prepareCmd: 'sh ./scripts/release.sh',
+                publishCmd: 'npm publish',
             },
         ],
         [
